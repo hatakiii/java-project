@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import AttendancePage from "./pages/AttendancePage";
+import StudentDetailPage from "./pages/StudentDetailPage";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -58,6 +59,14 @@ export default function App() {
             element={
               <PrivateRoute>
                 <AttendancePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/student/:id"
+            element={
+              <PrivateRoute>
+                <StudentDetailPage />
               </PrivateRoute>
             }
           />
