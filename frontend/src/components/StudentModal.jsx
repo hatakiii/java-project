@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { studentApi } from '../api/api';
 
-const INITIAL = { firstName: '', lastName: '', age: '', grade: '', phoneNumber: '', address: '' };
+const INITIAL = { firstName: '', lastName: '', age: '', grade: '', phoneNumber: '', address: '', imageUrl: '' };
 
 export default function StudentModal({ student, onSave, onClose }) {
     const [form, setForm] = useState(INITIAL);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (student) {
@@ -16,10 +21,16 @@ export default function StudentModal({ student, onSave, onClose }) {
                 grade: student.grade || '',
                 phoneNumber: student.phoneNumber || '',
                 address: student.address || '',
+                imageUrl: student.imageUrl || '',
             });
+            if (student.imageUrl) {
+                setImagePreview(student.imageUrl);
+            }
         } else {
             setForm(INITIAL);
+            setImagePreview(null);
         }
+        setImageFile(null);
         setErrors({});
     }, [student]);
 
@@ -38,12 +49,45 @@ export default function StudentModal({ student, onSave, onClose }) {
         setErrors({ ...errors, [e.target.name]: '' });
     };
 
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                setErrors({ ...errors, image: 'Зургийн хэмжээ 5MB-аас бага байх ёстой' });
+                return;
+            }
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+            setErrors({ ...errors, image: '' });
+        }
+    };
+
+    const removeImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
+        setForm({ ...form, imageUrl: '' });
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
         try {
-            await onSave({ ...form, age: parseInt(form.age) });
+            let imageUrl = form.imageUrl;
+
+            // Upload new image if selected
+            if (imageFile) {
+                setUploading(true);
+                const uploadRes = await studentApi.uploadImage(imageFile);
+                imageUrl = uploadRes.data.data.imageUrl;
+                setUploading(false);
+            }
+
+            await onSave({ ...form, age: parseInt(form.age), imageUrl });
+        } catch (err) {
+            setUploading(false);
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -60,6 +104,42 @@ export default function StudentModal({ student, onSave, onClose }) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="modal-form">
+                    {/* Image Upload */}
+                    <div className="image-upload-section">
+                        <div
+                            className="image-upload-area"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {imagePreview ? (
+                                <div className="image-preview-wrapper">
+                                    <img src={imagePreview} alt="Preview" className="image-preview" />
+                                    <div className="image-overlay">
+                                        <span>📷 Солих</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="image-placeholder">
+                                    <span className="upload-icon">📷</span>
+                                    <span className="upload-text">Зураг оруулах</span>
+                                    <span className="upload-hint">JPG, PNG — 5MB хүртэл</span>
+                                </div>
+                            )}
+                        </div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageSelect}
+                            style={{ display: 'none' }}
+                        />
+                        {imagePreview && (
+                            <button type="button" className="remove-image-btn" onClick={removeImage}>
+                                ✕ Зураг устгах
+                            </button>
+                        )}
+                        {errors.image && <span className="field-error">{errors.image}</span>}
+                    </div>
+
                     <div className="form-grid">
                         <div className="form-group">
                             <label>Нэр <span className="required">*</span></label>
@@ -139,8 +219,8 @@ export default function StudentModal({ student, onSave, onClose }) {
 
                     <div className="modal-footer">
                         <button type="button" className="cancel-btn" onClick={onClose}>Цуцлах</button>
-                        <button type="submit" className="save-btn" disabled={loading}>
-                            {loading ? '⏳ Хадгалж байна...' : student ? '💾 Шинэчлэх' : '✨ Нэмэх'}
+                        <button type="submit" className="save-btn" disabled={loading || uploading}>
+                            {uploading ? '📤 Зураг байршуулж байна...' : loading ? '⏳ Хадгалж байна...' : student ? '💾 Шинэчлэх' : '✨ Нэмэх'}
                         </button>
                     </div>
                 </form>

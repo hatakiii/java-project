@@ -26,5 +26,7 @@ public class Student {
 
     private String address;
 
+    private String imageUrl;    // Cloudinary-д байршуулсан зургийн URL
+
     private String teacherId;   // Ямар багшийн сурагч болохыг тодорхойлно
 }

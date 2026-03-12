@@ -25,4 +25,6 @@ public class StudentRequest {
     private String phoneNumber;
 
     private String address;
+
+    private String imageUrl;
 }

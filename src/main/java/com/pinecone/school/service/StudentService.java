@@ -3,7 +3,6 @@ package com.pinecone.school.service;
 import com.pinecone.school.dto.request.StudentRequest;
 import com.pinecone.school.model.Student;
 import com.pinecone.school.repository.StudentRepository;
-import com.pinecone.school.repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +13,7 @@ import java.util.List;
 public class StudentService {
 
     private final StudentRepository studentRepository;
-    private final TeacherRepository teacherRepository;
+
 
     // Багшийн бүх сурагчдыг авах
     public List<Student> getStudentsByTeacher(String teacherId) {
@@ -30,6 +29,7 @@ public class StudentService {
                 .grade(request.getGrade())
                 .phoneNumber(request.getPhoneNumber())
                 .address(request.getAddress())
+                .imageUrl(request.getImageUrl())
                 .teacherId(teacherId)
                 .build();
         return studentRepository.save(student);
@@ -50,6 +50,9 @@ public class StudentService {
         existing.setGrade(request.getGrade());
         existing.setPhoneNumber(request.getPhoneNumber());
         existing.setAddress(request.getAddress());
+        if (request.getImageUrl() != null) {
+            existing.setImageUrl(request.getImageUrl());
+        }
 
         return studentRepository.save(existing);
     }
@@ -78,9 +81,4 @@ public class StudentService {
         return student;
     }
 
-    private String resolveTeacherId(String username) {
-        return teacherRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Багш олдсонгүй"))
-                .getId();
-    }
 }

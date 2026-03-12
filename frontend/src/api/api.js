@@ -48,6 +48,13 @@ export const studentApi = {
     create: (data) => api.post('/students', data),
     update: (id, data) => api.put(`/students/${id}`, data),
     delete: (id) => api.delete(`/students/${id}`),
+    uploadImage: (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return api.post('/students/upload-image', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
 };
 
 // Attendance API
