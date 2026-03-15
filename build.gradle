@@ -47,16 +47,26 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// .env файлыг уншиж bootRun task-д environment variable болгон дамжуулна
-bootRun {
+// .env файлыг уншиж environment variable болгон дамжуулах функц
+def loadEnv() {
 	def envFile = file("${rootDir}/.env")
+	def env = [:]
 	if (envFile.exists()) {
 		envFile.readLines().each { line ->
-			// Хоосон мөр болон тайлбар (#) мөрүүдийг алгасна
 			if (line && !line.startsWith('#') && line.contains('=')) {
 				def (key, value) = line.split('=', 2).collect { it.trim() }
-				environment(key, value)
+				env[key] = value
 			}
 		}
 	}
+	return env
+}
+
+bootRun {
+	environment loadEnv()
+}
+
+test {
+	environment loadEnv()
+	useJUnitPlatform()
 }

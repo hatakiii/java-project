@@ -41,6 +41,14 @@ public class StudentController {
         return ResponseEntity.ok(ApiResponse.success("Сурагчдын жагсаалт", students));
     }
 
+    // GET /api/students/deleted - Устгагдсан сурагчдыг авах
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse<List<Student>>> getDeleted(@AuthenticationPrincipal UserDetails userDetails) {
+        String teacherId = getTeacherId(userDetails);
+        List<Student> students = studentService.getDeletedStudentsByTeacher(teacherId);
+        return ResponseEntity.ok(ApiResponse.success("Устгагдсан сурагчдын жагсаалт", students));
+    }
+
     // GET /api/students/{id} - Нэг сурагч авах
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Student>> getById(@PathVariable String id,
@@ -81,7 +89,6 @@ public class StudentController {
         }
     }
 
-    // DELETE /api/students/{id} - Сурагч устгах
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id,
                                                      @AuthenticationPrincipal UserDetails userDetails) {
@@ -89,6 +96,19 @@ public class StudentController {
             String teacherId = getTeacherId(userDetails);
             studentService.deleteStudent(id, teacherId);
             return ResponseEntity.ok(ApiResponse.success("Сурагч амжилттай устгагдлаа!", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    // POST /api/students/{id}/restore - Сурагч сэргээх
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<ApiResponse<Student>> restore(@PathVariable String id,
+                                                         @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            String teacherId = getTeacherId(userDetails);
+            Student student = studentService.restoreStudent(id, teacherId);
+            return ResponseEntity.ok(ApiResponse.success("Сурагч амжилттай сэргээгдлээ!", student));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }

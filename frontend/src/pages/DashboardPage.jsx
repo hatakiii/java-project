@@ -17,9 +17,9 @@ export default function DashboardPage() {
     const [toast, setToast] = useState(null);
     const [stats, setStats] = useState({ total: 0, grades: {} });
 
-    const showToast = (msg, type = 'success') => {
-        setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
+    const showToast = (msg, type = 'success', onUndo = null) => {
+        setToast({ msg, type, onUndo });
+        setTimeout(() => setToast(null), 5000); // 5 seconds for delete undo
     };
 
     const fetchStudents = async () => {
@@ -59,13 +59,25 @@ export default function DashboardPage() {
     };
 
     const handleDelete = async () => {
+        const studentId = deleteTarget.id;
+        const studentName = `${deleteTarget.firstName} ${deleteTarget.lastName}`;
         try {
-            await studentApi.delete(deleteTarget.id);
-            showToast('Сурагч устгагдлаа ✓');
+            await studentApi.delete(studentId);
             setDeleteTarget(null);
             fetchStudents();
+            showToast(`${studentName} устгагдлаа`, 'success', () => handleRestore(studentId));
         } catch {
             showToast('Устгахад алдаа гарлаа', 'error');
+        }
+    };
+
+    const handleRestore = async (id) => {
+        try {
+            await studentApi.restore(id);
+            showToast('Сурагч сэргээгдлээ ✓');
+            fetchStudents();
+        } catch {
+            showToast('Сэргээхэд алдаа гарлаа', 'error');
         }
     };
 
@@ -80,7 +92,15 @@ export default function DashboardPage() {
             {/* Toast */}
             {toast && (
                 <div className={`toast toast-${toast.type}`}>
-                    {toast.type === 'success' ? '✅' : '❌'} {toast.msg}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>{toast.type === 'success' ? '✅' : '❌'} {toast.msg}</span>
+                        {toast.onUndo && (
+                            <button className="undo-btn" onClick={() => {
+                                toast.onUndo();
+                                setToast(null);
+                            }}>Буцаах</button>
+                        )}
+                    </div>
                 </div>
             )}
 

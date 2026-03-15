@@ -15,9 +15,14 @@ public class StudentService {
     private final StudentRepository studentRepository;
 
 
-    // Багшийн бүх сурагчдыг авах
+    // Багшийн бүх сурагчдыг авах (устгагдаагүй)
     public List<Student> getStudentsByTeacher(String teacherId) {
-        return studentRepository.findByTeacherId(teacherId);
+        return studentRepository.findByTeacherIdAndDeletedFalse(teacherId);
+    }
+
+    // Устгагдсан сурагчдыг авах
+    public List<Student> getDeletedStudentsByTeacher(String teacherId) {
+        return studentRepository.findByTeacherIdAndDeletedTrue(teacherId);
     }
 
     // Сурагч үүсгэх
@@ -57,7 +62,7 @@ public class StudentService {
         return studentRepository.save(existing);
     }
 
-    // Сурагч устгах
+    // Сурагч устгах (Soft Delete)
     public void deleteStudent(String id, String teacherId) {
         Student existing = studentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Сурагч олдсонгүй"));
@@ -66,7 +71,31 @@ public class StudentService {
             throw new RuntimeException("Та энэ сурагчийг устгах эрхгүй байна");
         }
 
-        studentRepository.deleteById(id);
+        existing.setDeleted(true);
+        existing.setDeletedAt(java.time.LocalDateTime.now());
+        studentRepository.save(existing);
+    }
+
+    // Сурагчийг буцааж сэргээх (Undo Delete)
+    public Student restoreStudent(String id, String teacherId) {
+        Student existing = studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Сурагч олдсонгүй"));
+
+        if (!existing.getTeacherId().equals(teacherId)) {
+            throw new RuntimeException("Та энэ сурагчийг сэргээх эрхгүй байна");
+        }
+
+        existing.setDeleted(false);
+        existing.setDeletedAt(null);
+        return studentRepository.save(existing);
+    }
+
+    // 5 хоногоос дээш хугацаагаар устгагдсан сурагчдыг бүрмөсөн устгах
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 0 * * *") // Өдөр бүр шөнө дунд ажиллана
+    public void purgeDeletedStudents() {
+        java.time.LocalDateTime fiveDaysAgo = java.time.LocalDateTime.now().minusDays(5);
+        List<Student> toDelete = studentRepository.findAllByDeletedTrueAndDeletedAtBefore(fiveDaysAgo);
+        studentRepository.deleteAll(toDelete);
     }
 
     // Нэг сурагч авах

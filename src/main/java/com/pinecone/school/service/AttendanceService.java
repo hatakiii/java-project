@@ -51,7 +51,7 @@ public class AttendanceService {
     }
 
     public List<AttendanceResponse> getAttendanceForDate(LocalDate date, String teacherId) {
-        List<Student> students = studentRepository.findByTeacherId(teacherId);
+        List<Student> students = studentRepository.findByTeacherIdAndDeletedFalse(teacherId);
         List<Attendance> attendances = attendanceRepository.findByTeacherIdAndDate(teacherId, date);
 
         Map<String, Attendance.AttendanceStatus> attendanceMap = attendances.stream()

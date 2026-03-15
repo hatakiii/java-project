@@ -29,4 +29,9 @@ public class Student {
     private String imageUrl;    // Cloudinary-д байршуулсан зургийн URL
 
     private String teacherId;   // Ямар багшийн сурагч болохыг тодорхойлно
+    
+    @Builder.Default
+    private Boolean deleted = false;
+    
+    private java.time.LocalDateTime deletedAt;
 }

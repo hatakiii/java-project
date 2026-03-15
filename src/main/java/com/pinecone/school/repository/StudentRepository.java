@@ -8,6 +8,8 @@ import java.util.List;
 
 @Repository
 public interface StudentRepository extends MongoRepository<Student, String> {
-    List<Student> findByTeacherId(String teacherId);
+    List<Student> findByTeacherIdAndDeletedFalse(String teacherId);
+    List<Student> findByTeacherIdAndDeletedTrue(String teacherId);
+    List<Student> findAllByDeletedTrueAndDeletedAtBefore(java.time.LocalDateTime dateTime);
     void deleteByIdAndTeacherId(String id, String teacherId);
 }

@@ -48,6 +48,8 @@ export const studentApi = {
     create: (data) => api.post('/students', data),
     update: (id, data) => api.put(`/students/${id}`, data),
     delete: (id) => api.delete(`/students/${id}`),
+    restore: (id) => api.post(`/students/${id}/restore`),
+    getDeleted: () => api.get('/students/deleted'),
     uploadImage: (file) => {
         const formData = new FormData();
         formData.append('file', file);
